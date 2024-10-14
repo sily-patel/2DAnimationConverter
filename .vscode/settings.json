@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "2DAnimationTool.sln"
+    "dotnet.defaultSolution": "2DAnimationConverter.sln"
 }

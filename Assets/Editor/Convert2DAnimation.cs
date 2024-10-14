@@ -14,44 +14,48 @@ using System.IO;
 
 public class Convert2DAnimation : EditorWindow
 {
-    private string[] textureSizes = new string[] { "512x512", "1024x1024", "2048x2048", "4096x4096" };
-    private int selectedSizeIndex = 1; // Default to "1024x1024"
     private RenderTexture renderTexture;
     private Camera selectedCamera; // Camera object to be selected by the user
+    private string[] textureSizes = new string[] { "128x128", "256x256", "512x512", "1024x1024", "2048x2048", "4096x4096" };
+    private int selectedTextureSizeIndex = 3; // Default to "1024x1024"
+    private string saveFolderPath = "Assets/2D Animation Converter/Output";
+    private int startFrame = 0, stopFrame = 60, currentFrameCounter = 0; // Internal frame tracking
     private bool isRecording = false;
-    private int startFrame = 0;  // Frame A = 0
-    private int stopFrame = 60;  // Frame B = 60
-    private string saveFolderPath = "Assets/RecordedFrames";
-    private int frameCounter = 0; // Internal frame tracking
 
-    [MenuItem("Tools/Frame Recorder")]
+    [MenuItem("Tools/2D Animation Converter")]
     public static void ShowWindow()
     {
-        GetWindow<Convert2DAnimation>("Frame Recorder");
-    }
-
-    private void OnEnable()
-    {
-        CreateRenderTexture(); // Automatically create render texture on enable
+        GetWindow<Convert2DAnimation>("2D Animation Converter");
     }
 
     private void OnGUI()
     {
-        GUILayout.Label("Frame Recorder Tool", EditorStyles.boldLabel);
+        #region Initialize
+        GUILayout.Label("2D Animation Converter Tool", EditorStyles.boldLabel);
 
-        // Display Start and Stop Frames (A and B)
-        GUILayout.Label($"Start at Frame A: {startFrame}", EditorStyles.label);
-        GUILayout.Label($"Stop at Frame B: {stopFrame}", EditorStyles.label);
 
         // Dropdown for texture size selection
-        selectedSizeIndex = EditorGUILayout.Popup("Texture Size", selectedSizeIndex, textureSizes);
+        selectedTextureSizeIndex = EditorGUILayout.Popup("Texture Size", selectedTextureSizeIndex, textureSizes);
 
         // Drag and drop Camera field
         selectedCamera = (Camera)EditorGUILayout.ObjectField("Target Camera", selectedCamera, typeof(Camera), true);
 
+
+
+
+
+
+
+        GUILayout.Label($"Start at Frame A: {startFrame}", EditorStyles.label);
         // Select or create folder to save recorded images
-        GUILayout.Label("Save Folder Path:", EditorStyles.label);
+        GUILayout.Label("Output Folder Path:", EditorStyles.label);
         saveFolderPath = EditorGUILayout.TextField(saveFolderPath);
+
+        if (GUILayout.Button("Preview"))
+        {
+            CreateRenderTexture();
+        }
+        #endregion
 
         if (GUILayout.Button("Start Game and Start Recording"))
         {
@@ -66,14 +70,20 @@ public class Convert2DAnimation : EditorWindow
 
         if (isRecording)
         {
-            GUILayout.Label($"Recording... Capturing frame {frameCounter - startFrame}");
+            GUILayout.Label($"Recording... Capturing frame {currentFrameCounter - startFrame}");
+        }
+        if (renderTexture != null)
+        {
+            GUILayout.Label("Recorder Render Texture Preview", EditorStyles.boldLabel);
+            GUILayout.Box(renderTexture, GUILayout.Width(200), GUILayout.Height(200));
         }
     }
 
+    #region Initialize
     private void CreateRenderTexture()
     {
         // Parse the selected texture size from the dropdown menu
-        string[] dimensions = textureSizes[selectedSizeIndex].Split('x');
+        string[] dimensions = textureSizes[selectedTextureSizeIndex].Split('x');
         int textureWidth = int.Parse(dimensions[0]);
         int textureHeight = int.Parse(dimensions[1]);
 
@@ -96,7 +106,9 @@ public class Convert2DAnimation : EditorWindow
 
         Debug.Log($"Render Texture Created: {textureWidth}x{textureHeight}");
     }
+    #endregion
 
+    #region Recording
     private void StartGameAndRecording()
     {
         if (selectedCamera == null)
@@ -108,14 +120,12 @@ public class Convert2DAnimation : EditorWindow
         EditorApplication.isPlaying = true; // Start the game
         EditorApplication.update += RecordFrames; // Start listening to frame updates
         isRecording = true;
-        frameCounter = 0;
+        currentFrameCounter = 0;
         Debug.Log("Recording started. Capturing frames from A=0 to B=60.");
     }
 
     private void RecordFrames()
     {
-
-
         // Render the selected camera's view into the render texture
         // if (Time.frameCount >= startFrame && Time.frameCount <= stopFrame)
         {
@@ -152,4 +162,5 @@ public class Convert2DAnimation : EditorWindow
             return;
         }
     }
+    #endregion
 }
