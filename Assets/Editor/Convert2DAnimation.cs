@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+using Unity.VisualScripting;
 
 //* Drag and drop your game object with animation on it
 //* Hit convert
@@ -11,72 +12,103 @@ using System.IO;
 //* Create sprite renderer on the object
 //* put image on to key frame
 //* read sprite size from original file and put on to images
+public class EditorValues
+{
+    public static string CharacterObjectInstanceIDKey = "CharacterObjectPath";
+    public static string SelectedCameraInstanceIDKey = "SelectedCameraPath";
 
+    public static string OutputFolderPathKey = "OutputFolderPath";
+    public static string DefaultOutputFolderPath = "Assets/2D Animation Converter/Output";
+
+}
 public class Convert2DAnimation : EditorWindow
 {
     private RenderTexture renderTexture;
     private Camera selectedCamera; // Camera object to be selected by the user
+    private GameObject characterObject;
     private string[] textureSizes = new string[] { "128x128", "256x256", "512x512", "1024x1024", "2048x2048", "4096x4096" };
     private int selectedTextureSizeIndex = 3; // Default to "1024x1024"
-    private string saveFolderPath = "Assets/2D Animation Converter/Output";
+
     private int startFrame = 0, stopFrame = 60, currentFrameCounter = 0; // Internal frame tracking
     private bool isRecording = false;
+    string outputFolderPath = "", finalOutputPath = "";
 
     [MenuItem("Tools/2D Animation Converter")]
     public static void ShowWindow()
     {
         GetWindow<Convert2DAnimation>("2D Animation Converter");
     }
+    private void OnEnable()
+    {
+        LoadWindowState();
+    }
+    private void OnDisable()
+    {
+        SaveWindowState();
+    }
 
     private void OnGUI()
     {
         #region Initialize
+
         GUILayout.Label("2D Animation Converter Tool", EditorStyles.boldLabel);
-
-
-        // Dropdown for texture size selection
         selectedTextureSizeIndex = EditorGUILayout.Popup("Texture Size", selectedTextureSizeIndex, textureSizes);
-
-        // Drag and drop Camera field
         selectedCamera = (Camera)EditorGUILayout.ObjectField("Target Camera", selectedCamera, typeof(Camera), true);
+        EditorGUILayout.Space();
 
+        characterObject = (GameObject)EditorGUILayout.ObjectField("Character Object", characterObject, typeof(GameObject), true);
+        EditorGUILayout.Space();
 
+        finalOutputPath = characterObject != null ? outputFolderPath + ("/" + characterObject.name) : outputFolderPath;
+        EditorGUILayout.LabelField("Output Folder:", finalOutputPath);
 
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        if (GUILayout.Button("Select Output Folder", GUILayout.Width(150)))
+        {
+            string selectedPath = EditorUtility.OpenFolderPanel("Select Folder", "Assets/", "");
+            if (selectedPath.StartsWith(Application.dataPath))
+                outputFolderPath = "Assets" + selectedPath.Substring(Application.dataPath.Length);
+            else
+                Debug.LogWarning("Selected folder is not within the Assets folder.");
+        }
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
 
+        EditorGUILayout.Space();
 
+        #endregion
 
 
         GUILayout.Label($"Start at Frame A: {startFrame}", EditorStyles.label);
-        // Select or create folder to save recorded images
-        GUILayout.Label("Output Folder Path:", EditorStyles.label);
-        saveFolderPath = EditorGUILayout.TextField(saveFolderPath);
+        EditorGUILayout.Space();
 
-        if (GUILayout.Button("Preview"))
-        {
-            CreateRenderTexture();
-        }
-        #endregion
+        // if (GUILayout.Button("Preview"))
+        // {
+        //     CreateRenderTexture();
+        // }
+        // #endregion
 
-        if (GUILayout.Button("Start Game and Start Recording"))
-        {
-            StartGameAndRecording();
-        }
+        // if (GUILayout.Button("Start Game and Start Recording"))
+        // {
+        //     StartGameAndRecording();
+        // }
 
-        if (GUILayout.Button("Stop Game"))
-        {
-            EditorApplication.isPlaying = false; // Stop the game
-            isRecording = false;  // Ensure recording is stopped
-        }
+        // if (GUILayout.Button("Stop Game"))
+        // {
+        //     EditorApplication.isPlaying = false; // Stop the game
+        //     isRecording = false;  // Ensure recording is stopped
+        // }
 
-        if (isRecording)
-        {
-            GUILayout.Label($"Recording... Capturing frame {currentFrameCounter - startFrame}");
-        }
-        if (renderTexture != null)
-        {
-            GUILayout.Label("Recorder Render Texture Preview", EditorStyles.boldLabel);
-            GUILayout.Box(renderTexture, GUILayout.Width(200), GUILayout.Height(200));
-        }
+        // if (isRecording)
+        // {
+        //     GUILayout.Label($"Recording... Capturing frame {currentFrameCounter - startFrame}");
+        // }
+        // if (renderTexture != null)
+        // {
+        //     GUILayout.Label("Recorder Render Texture Preview", EditorStyles.boldLabel);
+        //     GUILayout.Box(renderTexture, GUILayout.Width(200), GUILayout.Height(200));
+        // }
     }
 
     #region Initialize
@@ -97,14 +129,44 @@ public class Convert2DAnimation : EditorWindow
         renderTexture = new RenderTexture(textureWidth, textureHeight, 24);
         renderTexture.name = "GeneratedRenderTexture";
 
-        // Ensure the directory exists
-        if (!Directory.Exists(saveFolderPath))
-        {
-            Directory.CreateDirectory(saveFolderPath);
-            Debug.Log("Created folder: " + saveFolderPath);
-        }
-
         Debug.Log($"Render Texture Created: {textureWidth}x{textureHeight}");
+    }
+    // Saving the data using EditorPrefs (works even after closing the editor)
+    private void SaveWindowState()
+    {
+        if (characterObject != null)
+            EditorPrefs.SetInt(EditorValues.CharacterObjectInstanceIDKey, characterObject.GetInstanceID());
+        else
+            EditorPrefs.DeleteKey(EditorValues.CharacterObjectInstanceIDKey);
+
+        if (selectedCamera != null)
+            EditorPrefs.SetInt(EditorValues.SelectedCameraInstanceIDKey, selectedCamera.GetInstanceID());
+        else
+            EditorPrefs.DeleteKey(EditorValues.SelectedCameraInstanceIDKey);
+
+        if (outputFolderPath != "")
+            EditorPrefs.SetString(EditorValues.OutputFolderPathKey, outputFolderPath);
+
+    }
+    private void LoadWindowState()
+    {
+        int objID = EditorPrefs.GetInt(EditorValues.CharacterObjectInstanceIDKey, 0);
+        if (objID != 0)
+            characterObject = (GameObject)EditorUtility.InstanceIDToObject(objID);
+
+        objID = EditorPrefs.GetInt(EditorValues.SelectedCameraInstanceIDKey, 0);
+        if (objID != 0)
+            selectedCamera = EditorUtility.InstanceIDToObject(objID).GetComponent<Camera>();
+
+        outputFolderPath = EditorPrefs.GetString(EditorValues.OutputFolderPathKey, EditorValues.DefaultOutputFolderPath);
+    }
+
+    private void MakeFolderAvailable(string folderPath)
+    {
+        if (!Directory.Exists(folderPath))
+        {
+            Directory.CreateDirectory(folderPath);
+        }
     }
     #endregion
 
@@ -139,7 +201,7 @@ public class Convert2DAnimation : EditorWindow
             image.Apply();
 
             byte[] bytes = image.EncodeToPNG();
-            string frameFileName = Path.Combine(saveFolderPath, $"frame_{Time.frameCount}.png");
+            string frameFileName = Path.Combine(outputFolderPath, $"frame_{Time.frameCount}.png");
             File.WriteAllBytes(frameFileName, bytes);
             Debug.Log($"Captured Frame {Time.frameCount} at {frameFileName}");
 

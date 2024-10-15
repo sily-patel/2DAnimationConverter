@@ -11,6 +11,9 @@ public class AnimationInspectorTool : EditorWindow
     private float animationTime;
     private int totalFrames;
 
+    private string stringValue = "Default Text";
+    private GameObject dragDropObject;
+
     [MenuItem("Tools/Animation Inspector")]
     public static void ShowWindow()
     {
@@ -79,5 +82,56 @@ public class AnimationInspectorTool : EditorWindow
         {
             EditorGUILayout.HelpBox("The selected object does not have an Animator component.", MessageType.Warning);
         }
+
+        // String field
+        EditorGUILayout.LabelField("Enter a String:");
+        stringValue = EditorGUILayout.TextField(stringValue);
+
+        // Drag-and-drop GameObject field
+        EditorGUILayout.LabelField("Drag and Drop an Object:");
+        dragDropObject = (GameObject)EditorGUILayout.ObjectField(dragDropObject, typeof(GameObject), true);
+
+        // Save button
+        if (GUILayout.Button("Save Data"))
+        {
+            SaveData();
+        }
+
+        // Load button
+        if (GUILayout.Button("Load Data"))
+        {
+            LoadData();
+        }
+    }
+
+    // Saving the data using EditorPrefs (works even after closing the editor)
+    private void SaveData()
+    {
+        EditorPrefs.SetString("CustomEditor_StringValue", stringValue);
+
+        if (dragDropObject != null)
+        {
+            EditorPrefs.SetString("CustomEditor_DragDropObject", AssetDatabase.GetAssetPath(dragDropObject));
+        }
+        else
+        {
+            EditorPrefs.DeleteKey("CustomEditor_DragDropObject");
+        }
+
+        Debug.Log("Data Saved!");
+    }
+
+    // Loading the saved data
+    private void LoadData()
+    {
+        stringValue = EditorPrefs.GetString("CustomEditor_StringValue", "Default Text");
+
+        string dragDropObjectPath = EditorPrefs.GetString("CustomEditor_DragDropObject", "");
+        if (!string.IsNullOrEmpty(dragDropObjectPath))
+        {
+            dragDropObject = AssetDatabase.LoadAssetAtPath<GameObject>(dragDropObjectPath);
+        }
+
+        Debug.Log("Data Loaded!");
     }
 }
