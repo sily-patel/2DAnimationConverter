@@ -56,5 +56,8 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "2DAnimationConverter.sln"
+    "dotnet.defaultSolution": "2DAnimationConverter.sln",
+    "cSpell.words": [
+        "Packables"
+    ]
 }
