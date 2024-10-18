@@ -64,7 +64,6 @@
     <Analyzer Include="D:\Software\Install\Unity_Software\Editor\2022.3.43f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Editor\AnimationInspectorTool.cs" />
     <Compile Include="Assets\Editor\Convert2DAnimation.cs" />
   </ItemGroup>
   <ItemGroup>
