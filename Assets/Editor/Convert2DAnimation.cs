@@ -315,6 +315,8 @@ public class Convert2DAnimation : EditorWindow
         if (recordingSuccessful)
         {
             AssetDatabase.Refresh();
+
+            //* Get all saved images from output folder
             string imagesPath = outputFolderPath + ("/" + characterObject.name) + "/images";
             string[] guids = AssetDatabase.FindAssets("t:Sprite", new[] { imagesPath });
 
@@ -324,6 +326,7 @@ public class Convert2DAnimation : EditorWindow
                 return;
             }
 
+            //* Create Sprite Atlas
             string spriteAtlasPath = outputFolderPath + ("/" + characterObject.name) + ("/" + characterObject.name) + ".spriteatlas";
             SpriteAtlas spriteAtlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(spriteAtlasPath);
             if (spriteAtlas == null)
@@ -365,6 +368,7 @@ public class Convert2DAnimation : EditorWindow
 
             Debug.Log($"SpriteAtlas created at {spriteAtlasPath}");
 
+            //* Create Animation clip and Controller
             AnimationClip animationClip = new AnimationClip();
             animationClip.frameRate = characterAnimationClip.frameRate;
             animationClip.wrapMode = WrapMode.Loop;
@@ -401,6 +405,7 @@ public class Convert2DAnimation : EditorWindow
 
             string prefabPath = Path.Combine(outputFolderPath + ("/" + characterObject.name), characterObject.name + "_.prefab");
 
+            //* Create Prefab
             GameObject finalPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
 
             if (finalPrefab == null)
@@ -422,7 +427,6 @@ public class Convert2DAnimation : EditorWindow
 
             PrefabUtility.SaveAsPrefabAsset(finalPrefab, prefabPath);
 
-            // Clean up
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
