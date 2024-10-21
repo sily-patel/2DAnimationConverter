@@ -345,6 +345,7 @@ public class Convert2DAnimation : EditorWindow
 
             float pixelPerUnit = -1;
 
+            //* Get all
             List<Sprite> sprites = new List<Sprite>();
             foreach (string guid in guids)
             {
@@ -400,7 +401,7 @@ public class Convert2DAnimation : EditorWindow
 
             AnimatorController animatorController = AnimatorController.CreateAnimatorControllerAtPath(Path.Combine(animationPath, characterObject.name + ".controller"));
             animatorController.AddMotion(animationClip);
-
+            //* Save animation
             AssetDatabase.CreateAsset(animationClip, Path.Combine(animationPath, characterAnimationClip.name + ".anim"));
 
             string prefabPath = Path.Combine(outputFolderPath + ("/" + characterObject.name), characterObject.name + "_.prefab");
@@ -425,6 +426,7 @@ public class Convert2DAnimation : EditorWindow
 
             animator.runtimeAnimatorController = animatorController;
 
+            //* Save Prefab
             PrefabUtility.SaveAsPrefabAsset(finalPrefab, prefabPath);
 
             AssetDatabase.SaveAssets();
