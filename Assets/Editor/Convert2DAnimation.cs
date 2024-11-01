@@ -345,7 +345,7 @@ public class Convert2DAnimation : EditorWindow
 
             float pixelPerUnit = -1;
 
-            //* Get all
+            //* Get all images
             List<Sprite> sprites = new List<Sprite>();
             foreach (string guid in guids)
             {
