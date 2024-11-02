@@ -309,7 +309,7 @@ public class Convert2DAnimation : EditorWindow
         }
         currentFrameCounter++;
     }
-
+    #endregion
     void FinalStep()
     {
         if (recordingSuccessful)
@@ -433,5 +433,5 @@ public class Convert2DAnimation : EditorWindow
             AssetDatabase.Refresh();
         }
     }
-    #endregion
+
 }
