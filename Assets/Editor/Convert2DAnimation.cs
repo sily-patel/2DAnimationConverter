@@ -404,7 +404,7 @@ public class Convert2DAnimation : EditorWindow
 
             string animationPath = $"{outputFolderPath}/{characterObject.name}./animation";
 
-            AnimatorController animatorController = AnimatorController.CreateAnimatorControllerAtPath(Path.Combine(animationPath, characterObject.name + ".controller"));
+            AnimatorController animatorController = AnimatorController.CreateAnimatorControllerAtPath($"{outputFolderPath}/{characterObject.name}.controller");
             animatorController.AddMotion(animationClip);
             AssetDatabase.CreateAsset(animationClip, Path.Combine(animationPath, characterAnimationClip.name + ".anim"));
 
