@@ -2,7 +2,7 @@
 
 This Unity tool allows you to convert an object with sprite-bone animation into an object with an image sequence animation. It enables easier runtime management and can help reduce performance costs associated with skeletal animations.
 
-![Banner Image](.Images/TitleBoard.png)
+![Banner Image](./Images/TitleBoard.png)
 
 ## Table of Contents
 - [Unity Tool: Convert Sprite-Bone Animation to Image Sequence Animation](#unity-tool-convert-sprite-bone-animation-to-image-sequence-animation)
@@ -35,7 +35,8 @@ These instructions will help you integrate and use the tool in your Unity projec
 2. This is a Unity project so you can open it directly as new or Just copy Editor file into your project's Editor folder.
 3. After the import is complete, you should see the tool available in the Unity Editor.
 
-![Editor window Preview](.Images/Editor Preview.png)
+![Tool Preview](./Images/Tool_Preview.png)
+
 ## Usage
 1. Open the Unity Editor and locate the **Convert Sprite-Bone to Image Sequence** tool under `Window > Tools > 2D Animation Converter`.
 2. Prepare a Camera for capture.
