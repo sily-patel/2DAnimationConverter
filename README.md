@@ -2,6 +2,8 @@
 
 This Unity tool allows you to convert an object with sprite-bone animation into an object with an image sequence animation. It enables easier runtime management and can help reduce performance costs associated with skeletal animations.
 
+![alt text](https://github.com/sily-patel/2DAnimationConverter/tree/main/Assets/Sprites/Introduction/TitleBoard.png)
+
 ## Table of Contents
 - [Unity Tool: Convert Sprite-Bone Animation to Image Sequence Animation](#unity-tool-convert-sprite-bone-animation-to-image-sequence-animation)
   - [Table of Contents](#table-of-contents)
