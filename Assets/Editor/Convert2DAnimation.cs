@@ -41,6 +41,7 @@ public class Convert2DAnimation : EditorWindow
     {
         loadWindowState();
         Application.targetFrameRate = EditorValues.DefaultTargetFrameRate;
+        outputFolderPath = EditorValues.DefaultOutputFolderPath;
     }
     void OnDisable()
     {
@@ -71,14 +72,14 @@ public class Convert2DAnimation : EditorWindow
     #region GUI
     void ui_RequiredComponents()
     {
-        selectedTextureSizeIndex = EditorGUILayout.Popup("Texture Size", selectedTextureSizeIndex, textureSizes);
         selectedCamera = (Camera)EditorGUILayout.ObjectField("Target Camera", selectedCamera, typeof(Camera), true);
         characterObject = (GameObject)EditorGUILayout.ObjectField("Character Object", characterObject, typeof(GameObject), true);
+        selectedTextureSizeIndex = EditorGUILayout.Popup("Output Image Size", selectedTextureSizeIndex, textureSizes);
         EditorGUILayout.Space();
     }
     void ui_FolderPath()
     {
-        string finalOutputPath = characterObject != null ? outputFolderPath + ("/" + characterObject.name) : outputFolderPath;
+        string finalOutputPath = characterObject != null ? $"{outputFolderPath}/{characterObject.name}" : outputFolderPath;
         EditorGUILayout.LabelField("Output Folder:", finalOutputPath);
 
         GUILayout.BeginHorizontal();
@@ -111,11 +112,9 @@ public class Convert2DAnimation : EditorWindow
     }
     void display_RecordingStatus()
     {
-        GUILayout.Label($"Target FrameRate: {Application.targetFrameRate}", EditorStyles.label);
         if (isRecording)
         {
-            GUILayout.Label($"Capturing frames from {startFrame} to {stopFrame}.");
-            GUILayout.Label($"Capturing frame {currentFrameCounter}");
+            GUILayout.Label("Processing...");
         }
     }
     void button_Preview()
@@ -131,7 +130,8 @@ public class Convert2DAnimation : EditorWindow
     {
         if (GUILayout.Button("Convert to Image Sequence"))
         {
-            startGameAndRecording();
+            if (!isRecording)
+                startGameAndRecording();
         }
         EditorGUILayout.Space();
     }
@@ -161,7 +161,7 @@ public class Convert2DAnimation : EditorWindow
         }
 
         renderTexture = new RenderTexture(textureWidth, textureHeight, 24);
-        renderTexture.name = "GeneratedRenderTexture";
+        renderTexture.name = "RenderTexture";
 
         Debug.Log($"Render Texture Created: {textureWidth}x{textureHeight}");
     }
@@ -203,7 +203,6 @@ public class Convert2DAnimation : EditorWindow
 
         selectedTextureSizeIndex = EditorPrefs.GetInt(EditorValues.selectedTextureSizeIndexKey, EditorValues.DefaultSelectedTextureSizeIndex);
 
-
         outputFolderPath = EditorPrefs.GetString(EditorValues.OutputFolderPathKey, EditorValues.DefaultOutputFolderPath);
     }
     void makeFolderAvailable(string folderPath)
@@ -237,6 +236,7 @@ public class Convert2DAnimation : EditorWindow
             Debug.LogError("No character object selected. Please drag and drop a character object into the field.");
             return;
         }
+
         characterAnimator = characterObject.GetComponent<Animator>();
         if (characterAnimator == null)
         {
@@ -245,9 +245,16 @@ public class Convert2DAnimation : EditorWindow
         }
 
         characterAnimationClip = characterAnimator.runtimeAnimatorController.animationClips[0];
+        if (characterAnimationClip == null)
+        {
+            Debug.LogError("No animation clip attached in Animator");
+            return;
+        }
+
 
         EditorApplication.isPlaying = true;
         EditorApplication.update += frameUpdateTask;
+
         recordingSuccessful = false;
         isRecording = true;
         currentFrameCounter = 0;
@@ -255,16 +262,20 @@ public class Convert2DAnimation : EditorWindow
         stopFrame = startFrame * 2;
         Application.targetFrameRate = (int)characterAnimationClip.frameRate;
 
-        string savePath = outputFolderPath + ("/" + characterObject.name) + "/images";
+        string savePath = $"{outputFolderPath}/{characterObject.name}/images";
         deleteFolder(savePath);
         makeFolderAvailable(savePath);
 
-        savePath = outputFolderPath + ("/" + characterObject.name) + "/animation";
+        savePath = $"{outputFolderPath}/{characterObject.name}/animation";
         deleteFolder(savePath);
         makeFolderAvailable(savePath);
 
         createRenderTexture();
         prepareCamera();
+
+        Debug.Log("Recording started");
+        Debug.Log($"Target FrameRate: {Application.targetFrameRate}");
+        Debug.Log($"Capturing frames from {startFrame} to {stopFrame}.");
     }
     void frameUpdateTask()
     {
@@ -281,14 +292,14 @@ public class Convert2DAnimation : EditorWindow
             EditorApplication.update -= frameUpdateTask;
             EditorApplication.isPlaying = false;
             recordingSuccessful = true;
-            finalStep();
             isRecording = false;
+            finalStep();
         }
         currentFrameCounter++;
     }
     void takeImageFromTextureAndSave()
     {
-        string savePath = outputFolderPath + ("/" + characterObject.name) + "/images";
+        string savePath = $"{outputFolderPath}/{characterObject.name}/images";
 
         RenderTexture.active = renderTexture;
         Texture2D image = new Texture2D(renderTexture.width, renderTexture.height);
@@ -308,8 +319,8 @@ public class Convert2DAnimation : EditorWindow
         {
             AssetDatabase.Refresh();
 
-            //* Get all saved images from output folder
-            string imagesPath = outputFolderPath + ("/" + characterObject.name) + "/images";
+            //* Get output folder
+            string imagesPath = $"{outputFolderPath}/{characterObject.name}/images";
             string[] guids = AssetDatabase.FindAssets("t:Sprite", new[] { imagesPath });
 
             if (guids.Length == 0)
@@ -319,7 +330,7 @@ public class Convert2DAnimation : EditorWindow
             }
 
             //* Create Sprite Atlas
-            string spriteAtlasPath = outputFolderPath + ("/" + characterObject.name) + ("/" + characterObject.name) + ".spriteatlas";
+            string spriteAtlasPath = $"{imagesPath}/{characterObject.name}.spriteatlas";
             SpriteAtlas spriteAtlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(spriteAtlasPath);
             if (spriteAtlas == null)
             {
@@ -354,6 +365,7 @@ public class Convert2DAnimation : EditorWindow
                     sprites.Add(sprite);
                 }
             }
+
             if (AssetDatabase.Contains(spriteAtlas))
                 EditorUtility.SetDirty(spriteAtlas);
             else
@@ -365,6 +377,7 @@ public class Convert2DAnimation : EditorWindow
             AnimationClip animationClip = new AnimationClip();
             animationClip.frameRate = characterAnimationClip.frameRate;
             animationClip.wrapMode = WrapMode.Loop;
+
             SerializedObject serializedClip = new SerializedObject(animationClip);
             serializedClip.FindProperty("m_AnimationClipSettings.m_LoopTime").boolValue = true;
             serializedClip.ApplyModifiedProperties();
@@ -389,16 +402,14 @@ public class Convert2DAnimation : EditorWindow
 
             AnimationUtility.SetObjectReferenceCurve(animationClip, spriteBinding, keyframes);
 
-            string animationPath = outputFolderPath + ("/" + characterObject.name) + "/animation";
+            string animationPath = $"{outputFolderPath}/{characterObject.name}./animation";
 
             AnimatorController animatorController = AnimatorController.CreateAnimatorControllerAtPath(Path.Combine(animationPath, characterObject.name + ".controller"));
             animatorController.AddMotion(animationClip);
-            //* Save animation
             AssetDatabase.CreateAsset(animationClip, Path.Combine(animationPath, characterAnimationClip.name + ".anim"));
 
-            string prefabPath = Path.Combine(outputFolderPath + ("/" + characterObject.name), characterObject.name + "_.prefab");
-
             //* Create Prefab
+            string prefabPath = $"{outputFolderPath}/{characterObject.name}/{characterObject.name}_.prefab";
             GameObject finalPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
 
             if (finalPrefab == null)
@@ -415,12 +426,9 @@ public class Convert2DAnimation : EditorWindow
             Animator animator = finalPrefab.GetComponent<Animator>();
             if (animator == null)
                 animator = finalPrefab.AddComponent<Animator>();
-
             animator.runtimeAnimatorController = animatorController;
 
-            //* Save Prefab
             PrefabUtility.SaveAsPrefabAsset(finalPrefab, prefabPath);
-
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
